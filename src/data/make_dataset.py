@@ -100,8 +100,8 @@ def unify_and_clean_dataframe(
 
     clean_df["source_dataset"] = dataset_name
     clean_df["source_type"] = "news"
-    clean_df["text"] = [combine_title_content(t, c) for t, c in zip(clean_df["title"], clean_df["content"], strict=False)]
-    clean_df["id"] = [_stable_id(text, dataset_name) for text in clean_df["text"]]
+    clean_df["text"] = clean_df.apply(lambda row: combine_title_content(row["title"], row["content"]), axis=1)
+    clean_df["id"] = clean_df["text"].apply(lambda text: _stable_id(text, dataset_name))
 
     before_total = len(clean_df)
     clean_df = clean_df[clean_df["label"].notna()].copy()

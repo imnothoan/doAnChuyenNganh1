@@ -107,7 +107,7 @@ def _build_models() -> dict[str, Pipeline]:
         "svm": Pipeline(
             [
                 ("tfidf", TfidfVectorizer(max_features=30000, ngram_range=(1, 2))),
-                ("clf", LinearSVC()),
+                ("clf", LinearSVC(random_state=CFG.random_state)),
             ]
         ),
         "nb": Pipeline(
@@ -140,8 +140,8 @@ def train_baseline_models() -> dict[str, dict]:
         if hasattr(model, "predict_proba"):
             y_score = model.predict_proba(x_test)[:, 1]
         elif hasattr(model, "decision_function"):
-            decision = model.decision_function(x_test)
-            y_score = 1.0 / (1.0 + np.exp(-decision))
+            raw_scores = model.decision_function(x_test)
+            y_score = 1.0 / (1.0 + np.exp(-raw_scores))
 
         metrics = _compute_metrics(y_test, y_pred, y_score)
         all_metrics[name] = asdict(metrics)

@@ -31,7 +31,7 @@ def _run_git_clone(url: str, dest: Path) -> tuple[bool, str]:
 
     dest.parent.mkdir(parents=True, exist_ok=True)
     cmd = ["git", "clone", "--depth", "1", url, str(dest)]
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
     if result.returncode == 0:
         return True, "downloaded"
     message = (result.stderr or result.stdout or "clone_failed").strip()

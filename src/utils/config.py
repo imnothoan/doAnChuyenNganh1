@@ -20,6 +20,11 @@ class Config:
     random_state: int = int(os.getenv("RANDOM_STATE", "42"))
     val_size: float = float(os.getenv("VAL_SIZE", "0.15"))
     test_size: float = float(os.getenv("TEST_SIZE", "0.15"))
+    allowed_news_domains: tuple[str, ...] = tuple(
+        item.strip().lower()
+        for item in os.getenv("ALLOWED_NEWS_DOMAINS", "").split(",")
+        if item.strip()
+    )
 
 
 CFG = Config()

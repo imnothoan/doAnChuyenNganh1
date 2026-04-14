@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
+import ipaddress
+import socket
+from urllib.parse import urlparse, urlunparse
 
 import joblib
+import numpy as np
 import pandas as pd
 import requests
 import streamlit as st
@@ -15,8 +19,50 @@ from src.models.train_baseline import format_prediction_output
 from src.utils.config import CFG, ensure_directories
 
 
+def _build_allowed_public_url(url: str) -> str | None:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        return None
+
+    host = parsed.hostname
+    if not host:
+        return None
+    if host in {"localhost"}:
+        return None
+
+    if not CFG.allowed_news_domains:
+        return None
+
+    normalized_host = host.lower()
+    if normalized_host not in CFG.allowed_news_domains:
+        return None
+
+    resolved_ips: set = set()
+    try:
+        resolved_ips.add(ipaddress.ip_address(host))
+    except ValueError:
+        try:
+            for item in socket.getaddrinfo(host, None):
+                resolved_ips.add(ipaddress.ip_address(item[4][0]))
+        except OSError:
+            return None
+
+    is_public = all(
+        not (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast)
+        for ip in resolved_ips
+    )
+    if not is_public:
+        return None
+
+    safe_path = parsed.path or "/"
+    return urlunparse((parsed.scheme, parsed.netloc, safe_path, "", parsed.query, ""))
+
+
 def _extract_text_from_url(url: str) -> str:
-    response = requests.get(url, timeout=15)
+    safe_url = _build_allowed_public_url(url)
+    if safe_url is None:
+        raise ValueError("URL không hợp lệ, không public, hoặc chưa nằm trong ALLOWED_NEWS_DOMAINS.")
+    response = requests.get(safe_url, timeout=15, verify=True, allow_redirects=False)
     response.raise_for_status()
     soup = BeautifulSoup(response.text, "html.parser")
     title = soup.title.text.strip() if soup.title and soup.title.text else ""
@@ -56,6 +102,8 @@ def main() -> None:
         text_input = st.text_area("Nhập nội dung tin tức", height=180)
     else:
         url = st.text_input("Nhập URL bài báo")
+        if not CFG.allowed_news_domains:
+            st.info("Chức năng URL đang tắt để an toàn. Thiết lập ALLOWED_NEWS_DOMAINS trong .env để bật.")
         if url:
             try:
                 text_input = _extract_text_from_url(url)
@@ -75,7 +123,7 @@ def main() -> None:
             confidence = float(max(probs))
         else:
             decision = model.decision_function([clean])[0]
-            confidence = float(1 / (1 + pow(2.718281828, -decision)))
+            confidence = float(1 / (1 + np.exp(-decision)))
             probs = [1 - confidence, confidence]
 
         formatted = format_prediction_output(pred, confidence, probs)
@@ -99,7 +147,7 @@ def main() -> None:
 
         _save_history(
             {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "input_type": input_mode.lower(),
                 "text": clean,
                 "predicted_label": pred,

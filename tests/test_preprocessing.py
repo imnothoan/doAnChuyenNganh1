@@ -75,4 +75,5 @@ def test_time_split_is_supported_when_published_at_exists(tmp_path: Path):
     assert len(train_df) > 0
     assert len(val_df) > 0
     assert len(test_df) > 0
-    assert train_df["published_at"].max() <= val_df["published_at"].min() or train_df["published_at"].max() <= test_df["published_at"].min()
+    assert train_df["published_at"].max() <= val_df["published_at"].min()
+    assert val_df["published_at"].max() <= test_df["published_at"].min()
