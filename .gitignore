@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Environment
+.env
+.venv/
+
+# Data and artifacts (generated)
+data/raw/*
+!data/raw/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+models/artifacts/*
+!models/artifacts/.gitkeep
+models/reports/*
+!models/reports/.gitkeep
+
+reports/figures/*
+!reports/figures/.gitkeep
+
+# Generated reports
+reports/dataset_sources.json
+reports/dataset_profile.md
+reports/metrics_baseline.json
+reports/metrics_transformer.json
+reports/model_comparison.md
+reports/explanations_sample.json
