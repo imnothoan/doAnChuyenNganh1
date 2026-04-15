@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-python scripts/download_data.py
+python3 scripts/download_data.py
