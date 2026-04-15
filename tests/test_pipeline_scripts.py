@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from scripts._bootstrap import ensure_repo_root_on_path
+from scripts.run_pipeline import run_pipeline
 from src.evaluation.baseline_eval import evaluate_artifacts, required_artifact_paths
-from src.utils.script_bootstrap import ensure_repo_root_on_path
 
 
 def test_ensure_repo_root_on_path_includes_repo_root():
@@ -27,3 +28,14 @@ def test_evaluate_artifacts_passes_when_required_files_exist(tmp_path: Path):
     status = evaluate_artifacts(tmp_path)
     assert status["ok"] is True
     assert status["missing_files"] == []
+
+
+def test_run_pipeline_executes_steps_in_order():
+    calls: list[str] = []
+
+    def _fake_runner(step_name: str) -> None:
+        calls.append(step_name)
+
+    run_pipeline(step_runner=_fake_runner)
+
+    assert calls == ["download_data.py", "prepare_data.py", "train_baseline.py", "evaluate.py"]

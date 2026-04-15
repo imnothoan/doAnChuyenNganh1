@@ -188,7 +188,7 @@ def download_datasets() -> list[DownloadStatus]:
             continue
 
         ok = False
-        message = "download_failed"
+        message = "All download sources failed"
         successful_source = urls[0]
         for url in urls:
             logger.info("Trying source for %s: %s", dataset_name, url)

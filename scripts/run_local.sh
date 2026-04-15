@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 if [[ ! -d ".venv" ]]; then
-  echo "❌ Không tìm thấy .venv. Hãy tạo trước:"
+  echo "❌ không tìm thấy .venv. Hãy tạo trước:"
   echo "python3 -m venv .venv"
   exit 1
 fi
@@ -38,6 +38,6 @@ do
   if [[ -f "$f" ]]; then
     echo "  [x] $f"
   else
-    echo "  [ ] $f (missing)"
+    echo "  [ ] $f (thiếu)"
   fi
 done
