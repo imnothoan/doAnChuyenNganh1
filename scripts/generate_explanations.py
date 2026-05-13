@@ -1,5 +1,12 @@
 import argparse
 
+try:
+    from scripts._bootstrap import ensure_repo_root_on_path
+except ModuleNotFoundError:
+    from _bootstrap import ensure_repo_root_on_path
+
+ensure_repo_root_on_path(__file__)
+
 from src.explainability.explain import save_explanation_json
 
 

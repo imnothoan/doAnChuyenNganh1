@@ -147,19 +147,37 @@ def _ensure_local_sample_fallback(results: list[DownloadStatus]) -> list[Downloa
 def download_datasets() -> list[DownloadStatus]:
     ensure_directories()
     targets = [
-        ("VFND", "https://github.com/VFND/VFND-vietnamese-fake-news-datasets", CFG.data_raw_dir / "vfnd"),
-        ("TALLIP", "https://github.com/Arko98/TALLIP-FakeNews-Dataset", CFG.data_raw_dir / "tallip"),
-        ("Zenodo", "https://zenodo.org/records/2578917/latest", CFG.data_raw_dir / "zenodo"),
+        (
+            "VFND",
+            [
+                "https://github.com/VFND/VFND-vietnamese-fake-news-datasets",
+                "https://github.com/VFND/VFND-vietnamese-fake-news-datasets.git",
+            ],
+            CFG.data_raw_dir / "vfnd",
+        ),
+        (
+            "TALLIP",
+            [
+                "https://github.com/Arko98/TALLIP-FakeNews-Dataset",
+                "https://github.com/Arko98/TALLIP-FakeNews-Dataset.git",
+            ],
+            CFG.data_raw_dir / "tallip",
+        ),
+        (
+            "Zenodo",
+            ["https://zenodo.org/records/2578917/latest"],
+            CFG.data_raw_dir / "zenodo",
+        ),
     ]
 
     results: list[DownloadStatus] = []
     failed: list[DownloadStatus] = []
 
-    for dataset_name, url, dest in targets:
+    for dataset_name, urls, dest in targets:
         if dataset_name == "Zenodo":
             status = DownloadStatus(
                 dataset=dataset_name,
-                source=url,
+                source=urls[0],
                 destination=str(dest),
                 status="manual_required",
                 message="Zenodo latest endpoint may require browser/manual download",
@@ -169,10 +187,19 @@ def download_datasets() -> list[DownloadStatus]:
             results.append(status)
             continue
 
-        ok, message = _run_git_clone(url, dest)
+        ok = False
+        message = "All download sources failed"
+        successful_source = urls[0]
+        for url in urls:
+            logger.info("Trying source for %s: %s", dataset_name, url)
+            ok, message = _run_git_clone(url, dest)
+            if ok:
+                successful_source = url
+                break
+
         status = DownloadStatus(
             dataset=dataset_name,
-            source=url,
+            source=successful_source,
             destination=str(dest),
             status="ok" if ok else "failed",
             message=message,

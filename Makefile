@@ -1,20 +1,20 @@
-PYTHON ?= python
+PYTHON ?= python3
 .PHONY: setup data prepare train eval app all
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
 
 data:
-	PYTHONPATH=. $(PYTHON) scripts/download_data.py
+	$(PYTHON) scripts/download_data.py
 
 prepare:
-	PYTHONPATH=. $(PYTHON) scripts/prepare_data.py
+	$(PYTHON) scripts/prepare_data.py
 
 train:
-	PYTHONPATH=. $(PYTHON) scripts/train_baseline.py
+	$(PYTHON) scripts/train_baseline.py
 
 eval:
-	PYTHONPATH=. $(PYTHON) scripts/generate_explanations.py --text "Đây là bản tin thử nghiệm để đánh giá độ tin cậy."
+	$(PYTHON) scripts/evaluate.py
 
 app:
 	streamlit run app/streamlit_app.py

@@ -13,11 +13,13 @@ Dự án xây dựng pipeline đánh giá độ tin cậy tin tức tiếng Vi�
 ## Chạy nhanh
 ```bash
 make setup
-make data
-make prepare
-make train
-make eval
+make all
 make app
+```
+
+Hoặc chạy pipeline tuần tự bằng Python:
+```bash
+python3 scripts/run_pipeline.py
 ```
 
 ## Test
