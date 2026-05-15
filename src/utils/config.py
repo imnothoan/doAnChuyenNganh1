@@ -4,10 +4,16 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(PROJECT_ROOT / ".env")
+
 
 @dataclass(frozen=True)
 class Config:
-    project_root: Path = Path(__file__).resolve().parents[2]
+    project_root: Path = PROJECT_ROOT
     data_raw_dir: Path = project_root / "data" / "raw"
     data_interim_dir: Path = project_root / "data" / "interim"
     data_processed_dir: Path = project_root / "data" / "processed"

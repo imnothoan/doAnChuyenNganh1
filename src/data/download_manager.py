@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import subprocess
+from io import BytesIO
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
+import requests
 
 from src.utils.config import CFG, ensure_directories
 
@@ -42,6 +45,12 @@ def _write_manual_fallback(issues: list[DownloadStatus]) -> None:
     if not issues:
         return
 
+    def _display_destination(destination: str) -> str:
+        try:
+            return str(Path(destination).resolve().relative_to(CFG.project_root))
+        except ValueError:
+            return destination
+
     lines = [
         "# Dataset Manual Download Guide",
         "",
@@ -55,7 +64,7 @@ def _write_manual_fallback(issues: list[DownloadStatus]) -> None:
                 f"- Dataset: {issue.dataset}",
                 f"  - URL: {issue.source}",
                 f"  - Lỗi: {issue.message}",
-                f"  - Đích mong muốn: {issue.destination}",
+                f"  - Đích mong muốn: {_display_destination(issue.destination)}",
             ]
         )
 
@@ -144,6 +153,70 @@ def _ensure_local_sample_fallback(results: list[DownloadStatus]) -> list[Downloa
     return results
 
 
+def _download_vifactcheck() -> DownloadStatus:
+    dataset_name = "ViFactCheck"
+    dest_dir = CFG.data_raw_dir / "vifactcheck"
+    dest_file = dest_dir / "vifactcheck.csv"
+    source = "https://huggingface.co/datasets/tranthaihoa/vifactcheck"
+
+    if dest_file.exists():
+        return DownloadStatus(
+            dataset=dataset_name,
+            source=source,
+            destination=str(dest_file),
+            status="ok",
+            message="already_present",
+            timestamp_utc=datetime.now(timezone.utc).isoformat(),
+        )
+
+    parquet_urls = [
+        "https://huggingface.co/datasets/tranthaihoa/vifactcheck/resolve/main/data/train-00000-of-00001.parquet",
+        "https://huggingface.co/datasets/tranthaihoa/vifactcheck/resolve/main/data/dev-00000-of-00001.parquet",
+        "https://huggingface.co/datasets/tranthaihoa/vifactcheck/resolve/main/data/test-00000-of-00001.parquet",
+    ]
+
+    try:
+        frames = []
+        for url in parquet_urls:
+            response = requests.get(url, timeout=120)
+            response.raise_for_status()
+            frames.append(pd.read_parquet(BytesIO(response.content)))
+        raw = pd.concat(frames, ignore_index=True)
+        label_map = {0: "real", 1: "fake", 2: "misleading"}
+        converted = pd.DataFrame(
+            {
+                "title": raw.get("Statement", "").fillna("").astype(str),
+                "content": (
+                    raw.get("Context", "").fillna("").astype(str)
+                    + " "
+                    + raw.get("Evidence", "").fillna("").astype(str)
+                ),
+                "label": raw.get("labels", "").map(label_map),
+                "url": raw.get("Url", "").fillna("").astype(str),
+                "published_at": "",
+            }
+        )
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        converted.to_csv(dest_file, index=False, encoding="utf-8")
+        return DownloadStatus(
+            dataset=dataset_name,
+            source=source,
+            destination=str(dest_file),
+            status="ok",
+            message=f"downloaded_and_converted_{len(converted)}_rows",
+            timestamp_utc=datetime.now(timezone.utc).isoformat(),
+        )
+    except Exception as exc:
+        return DownloadStatus(
+            dataset=dataset_name,
+            source=source,
+            destination=str(dest_file),
+            status="manual_required",
+            message=f"Could not download Hugging Face parquet automatically: {exc}",
+            timestamp_utc=datetime.now(timezone.utc).isoformat(),
+        )
+
+
 def download_datasets() -> list[DownloadStatus]:
     ensure_directories()
     targets = [
@@ -197,18 +270,44 @@ def download_datasets() -> list[DownloadStatus]:
                 successful_source = url
                 break
 
+        status_value = "ok" if ok else "failed"
+        if ok and dataset_name == "TALLIP":
+            has_direct_data = any(dest.rglob("*.csv")) or any(dest.rglob("*.json")) or any(dest.rglob("*.txt"))
+            if not has_direct_data:
+                status_value = "manual_required"
+                message = "Repository cloned, but data files are distributed through the TALLIP zip link in README."
+
         status = DownloadStatus(
             dataset=dataset_name,
             source=successful_source,
             destination=str(dest),
-            status="ok" if ok else "failed",
+            status=status_value,
             message=message,
             timestamp_utc=datetime.now(timezone.utc).isoformat(),
         )
         results.append(status)
-        if not ok:
+        if status_value != "ok":
             failed.append(status)
             logger.warning("Failed to download %s: %s", dataset_name, message)
+
+    include_vifactcheck = os.getenv("INCLUDE_VIFACTCHECK", "0").strip().lower() in {"1", "true", "yes"}
+    if include_vifactcheck:
+        vifactcheck_status = _download_vifactcheck()
+        results.append(vifactcheck_status)
+        if vifactcheck_status.status != "ok":
+            failed.append(vifactcheck_status)
+            logger.warning("Failed to download %s: %s", vifactcheck_status.dataset, vifactcheck_status.message)
+    else:
+        results.append(
+            DownloadStatus(
+                dataset="ViFactCheck",
+                source="https://huggingface.co/datasets/tranthaihoa/vifactcheck",
+                destination=str(CFG.data_raw_dir / "vifactcheck"),
+                status="skipped",
+                message="optional_fact_checking_dataset_set_INCLUDE_VIFACTCHECK=1_to_enable",
+                timestamp_utc=datetime.now(timezone.utc).isoformat(),
+            )
+        )
 
     results = _ensure_local_sample_fallback(results)
 

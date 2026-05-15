@@ -3,10 +3,14 @@
 Các nguồn không tải tự động được. Hãy tải thủ công và đặt vào `data/raw/<dataset_name>/`.
 
 ## Danh sách lỗi
+- Dataset: TALLIP
+  - URL: https://github.com/Arko98/TALLIP-FakeNews-Dataset
+  - Lỗi: Repository cloned, but data files are distributed through the TALLIP zip link in README.
+  - Đích mong muốn: data/raw/tallip
 - Dataset: Zenodo
   - URL: https://zenodo.org/records/2578917/latest
   - Lỗi: Zenodo latest endpoint may require browser/manual download
-  - Đích mong muốn: /home/runner/work/doAnChuyenNganh1/doAnChuyenNganh1/data/raw/zenodo
+  - Đích mong muốn: data/raw/zenodo
 
 ## Bước thủ công
 1. Tải file/clone repo từ URL tương ứng.

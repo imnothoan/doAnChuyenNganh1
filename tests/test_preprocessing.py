@@ -50,7 +50,22 @@ def test_unify_and_clean_dataframe_soft_handles_missing_fields():
     assert cleaned.iloc[0]["title"] == "Tiêu đề"
     assert cleaned.iloc[0]["content"] == "Nội dung bài viết tiếng Việt"
     assert "Tiêu đề" in cleaned.iloc[0]["text"]
-    assert cleaned.iloc[0]["label"] == 1
+    assert cleaned.iloc[0]["label"] == 0
+
+
+def test_label_convention_maps_fake_to_positive_class():
+    df = pd.DataFrame(
+        {
+            "title": ["Tin giả", "Tin thật"],
+            "content": ["Nội dung đủ dài để giữ lại.", "Nội dung chính thống đủ dài."],
+            "label": ["fake", "real"],
+        }
+    )
+
+    cleaned = unify_and_clean_dataframe(df, "custom", min_text_length=5)
+
+    assert cleaned.loc[cleaned["title"] == "Tin giả", "label"].iloc[0] == 1
+    assert cleaned.loc[cleaned["title"] == "Tin thật", "label"].iloc[0] == 0
 
 
 def test_time_split_is_supported_when_published_at_exists(tmp_path: Path):

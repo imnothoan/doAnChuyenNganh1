@@ -1,5 +1,5 @@
 PYTHON ?= python3
-.PHONY: setup data prepare train eval app all
+.PHONY: setup data prepare train eval db app all
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -15,6 +15,9 @@ train:
 
 eval:
 	$(PYTHON) scripts/evaluate.py
+
+db:
+	$(PYTHON) scripts/setup_supabase_db.py
 
 app:
 	streamlit run app/streamlit_app.py

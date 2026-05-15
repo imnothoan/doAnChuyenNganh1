@@ -17,11 +17,14 @@ data/processed/*
 
 models/artifacts/*
 !models/artifacts/.gitkeep
+!models/artifacts/baseline_best.joblib
 models/reports/*
 !models/reports/.gitkeep
+!models/reports/model_metadata.json
 
 reports/figures/*
 !reports/figures/.gitkeep
+!reports/figures/confusion_matrix_*.png
 
 # Generated reports
 reports/dataset_sources.json
@@ -30,3 +33,6 @@ reports/metrics_baseline.json
 reports/metrics_transformer.json
 reports/model_comparison.md
 reports/explanations_sample.json
+!reports/dataset_profile.md
+!reports/metrics_baseline.json
+!reports/model_comparison.md

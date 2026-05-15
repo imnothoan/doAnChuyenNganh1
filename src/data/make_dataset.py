@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Iterable
 
@@ -29,23 +30,26 @@ UNIFIED_COLUMNS = [
 ]
 
 TITLE_CANDIDATES = ["title", "headline", "subject", "news_title"]
-CONTENT_CANDIDATES = ["content", "body", "text", "article", "news"]
+CONTENT_CANDIDATES = ["content", "body", "text", "maintext", "main_text", "description", "article", "news"]
 LABEL_CANDIDATES = ["label", "class", "target", "verdict", "is_fake"]
 URL_CANDIDATES = ["url", "link", "source_url"]
-TIME_CANDIDATES = ["published_at", "date", "datetime", "time", "timestamp"]
+TIME_CANDIDATES = ["published_at", "date_publish", "date", "datetime", "time", "timestamp"]
 
 
 LABEL_MAP = {
-    "real": 1,
-    "true": 1,
-    "reliable": 1,
-    "credible": 1,
-    "1": 1,
-    "fake": 0,
-    "false": 0,
-    "unreliable": 0,
-    "misleading": 0,
+    "real": 0,
+    "true": 0,
+    "reliable": 0,
+    "credible": 0,
+    "trusted": 0,
     "0": 0,
+    "fake": 1,
+    "false": 1,
+    "unreliable": 1,
+    "misleading": 1,
+    "rumor": 1,
+    "clickbait": 1,
+    "1": 1,
 }
 
 
@@ -71,6 +75,35 @@ def normalize_label(value: object) -> int | None:
     return None
 
 
+def dataset_name_from_path(path: Path) -> str:
+    try:
+        rel_parts = path.relative_to(CFG.data_raw_dir).parts
+    except ValueError:
+        rel_parts = path.parts
+    useful_parts = [
+        part
+        for part in rel_parts[:-1]
+        if part not in {".git", "CSV", "Dataset", "Dictionaries"} and not part.startswith(".")
+    ]
+    if not useful_parts:
+        return path.parent.name or "unknown"
+    return "_".join(useful_parts[:2]).lower()
+
+
+def infer_label_from_path(path: Path) -> int | None:
+    lowered_parts = {part.lower() for part in path.parts}
+    if "fake" in lowered_parts or "misleading" in lowered_parts:
+        return 1
+    if "real" in lowered_parts:
+        return 0
+    lowered_name = path.name.lower()
+    if "_fake_" in lowered_name or "fake" in lowered_name:
+        return 1
+    if "_real_" in lowered_name or "real" in lowered_name:
+        return 0
+    return None
+
+
 def _stable_id(text: str, dataset_name: str) -> str:
     digest = hashlib.sha256(f"{dataset_name}::{text}".encode("utf-8")).hexdigest()[:16]
     return f"{dataset_name}_{digest}"
@@ -80,11 +113,12 @@ def unify_and_clean_dataframe(
     df: pd.DataFrame,
     dataset_name: str,
     min_text_length: int | None = None,
+    label_hint: int | None = None,
 ) -> pd.DataFrame:
     min_text_length = min_text_length if min_text_length is not None else CFG.min_text_length
     title = _first_available_column(df, TITLE_CANDIDATES)
     content = _first_available_column(df, CONTENT_CANDIDATES)
-    labels = _first_available_column(df, LABEL_CANDIDATES)
+    labels = _first_available_column(df, LABEL_CANDIDATES, default=str(label_hint) if label_hint is not None else "")
     urls = _first_available_column(df, URL_CANDIDATES)
     published_at = _first_available_column(df, TIME_CANDIDATES)
 
@@ -111,7 +145,7 @@ def unify_and_clean_dataframe(
     clean_df["label"] = clean_df["label"].astype(int)
     clean_df = clean_df[UNIFIED_COLUMNS].reset_index(drop=True)
 
-    logger.info(
+    logger.debug(
         "Dataset %s cleaned: before=%s, after=%s, removed=%s",
         dataset_name,
         before_total,
@@ -132,11 +166,17 @@ def _read_csv(path: Path) -> pd.DataFrame:
 
 def _read_json(path: Path) -> pd.DataFrame:
     try:
-        return pd.read_json(path)
-    except ValueError:
-        with path.open("r", encoding="utf-8") as f:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        with path.open("r", encoding="utf-8", errors="ignore") as f:
             rows = [json.loads(line) for line in f if line.strip()]
         return pd.DataFrame(rows)
+
+    if isinstance(data, list):
+        return pd.DataFrame(data)
+    if isinstance(data, dict):
+        return pd.DataFrame([data])
+    return pd.DataFrame({"content": [str(data)]})
 
 
 def _read_txt(path: Path) -> pd.DataFrame:
@@ -161,7 +201,10 @@ def discover_data_files(root_dir: Path) -> list[Path]:
     files: list[Path] = []
     for pattern in patterns:
         files.extend(root_dir.glob(pattern))
-    return sorted(set(files))
+    ignored_parts = {".git", "Dictionaries", "Tools", "__MACOSX"}
+    if os.getenv("INCLUDE_VIFACTCHECK", "0").strip().lower() not in {"1", "true", "yes"}:
+        ignored_parts.add("vifactcheck")
+    return sorted({path for path in files if not ignored_parts.intersection(path.parts)})
 
 
 def split_dataset(
@@ -261,8 +304,13 @@ def make_dataset(time_aware_split: bool = False) -> tuple[pd.DataFrame, pd.DataF
         try:
             raw_df = read_file_to_dataframe(file_path)
             before_count += len(raw_df)
-            dataset_name = file_path.parent.name or "unknown"
-            clean_df = unify_and_clean_dataframe(raw_df, dataset_name, min_text_length=CFG.min_text_length)
+            dataset_name = dataset_name_from_path(file_path)
+            clean_df = unify_and_clean_dataframe(
+                raw_df,
+                dataset_name,
+                min_text_length=CFG.min_text_length,
+                label_hint=infer_label_from_path(file_path),
+            )
             if not clean_df.empty:
                 unified_dfs.append(clean_df)
         except Exception as exc:

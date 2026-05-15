@@ -1,0 +1,26 @@
+{
+  "best_model": "svm",
+  "label_convention": {
+    "0": "reliable/real",
+    "1": "unreliable/fake/clickbait"
+  },
+  "class_order": [
+    0,
+    1
+  ],
+  "dataset_sizes": {
+    "train": 350,
+    "validation": 75,
+    "test": 75
+  },
+  "best_model_test_after_refit": {
+    "accuracy": 0.92,
+    "precision_macro": 0.9214285714285715,
+    "recall_macro": 0.9196301564722618,
+    "f1_macro": 0.9198717948717949,
+    "precision_weighted": 0.9211428571428572,
+    "recall_weighted": 0.92,
+    "f1_weighted": 0.91991452991453,
+    "roc_auc": 0.9914651493598862
+  }
+}

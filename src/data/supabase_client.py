@@ -25,27 +25,43 @@ class SupabaseClient:
             except Exception:
                 self.enabled = False
 
-    def insert_prediction(self, payload: dict[str, Any]) -> dict[str, Any]:
-        payload = {**payload, "created_at": datetime.now(timezone.utc).isoformat()}
-        if self.enabled and self._client is not None:
-            return self._client.table("predictions").insert(payload).execute().data
+    def _append_local(self, table: str, payload: dict[str, Any]) -> dict[str, Any]:
         self.local_store.parent.mkdir(parents=True, exist_ok=True)
         with self.local_store.open("a", encoding="utf-8") as f:
-            f.write(json.dumps({"table": "predictions", "data": payload}, ensure_ascii=False) + "\n")
+            f.write(json.dumps({"table": table, "data": payload}, ensure_ascii=False) + "\n")
         return payload
 
-    def insert_feedback(self, payload: dict[str, Any]) -> dict[str, Any]:
+    def _insert(self, table: str, payload: dict[str, Any]) -> dict[str, Any]:
         payload = {**payload, "created_at": datetime.now(timezone.utc).isoformat()}
         if self.enabled and self._client is not None:
-            return self._client.table("feedback").insert(payload).execute().data
-        self.local_store.parent.mkdir(parents=True, exist_ok=True)
-        with self.local_store.open("a", encoding="utf-8") as f:
-            f.write(json.dumps({"table": "feedback", "data": payload}, ensure_ascii=False) + "\n")
-        return payload
+            try:
+                data = self._client.table(table).insert(payload).execute().data
+                if isinstance(data, list) and data:
+                    return data[0]
+                return payload
+            except Exception:
+                self.enabled = False
+        return self._append_local(table, payload)
+
+    def insert_prediction(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._insert("predictions", payload)
+
+    def insert_feedback(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self._insert("feedback", payload)
 
     def list_predictions(self, limit: int = 50) -> list[dict[str, Any]]:
         if self.enabled and self._client is not None:
-            return self._client.table("predictions").select("*").limit(limit).execute().data
+            try:
+                return (
+                    self._client.table("predictions")
+                    .select("*")
+                    .order("created_at", desc=True)
+                    .limit(limit)
+                    .execute()
+                    .data
+                )
+            except Exception:
+                self.enabled = False
         if not self.local_store.exists():
             return []
         rows: list[dict[str, Any]] = []
