@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.DS_Store
 
 # Environment
 .env
@@ -18,6 +19,7 @@ data/processed/*
 models/artifacts/*
 !models/artifacts/.gitkeep
 !models/artifacts/baseline_best.joblib
+models_Trained_Download_From_Codelabnotebook/
 models/reports/*
 !models/reports/.gitkeep
 !models/reports/model_metadata.json
@@ -28,6 +30,7 @@ reports/figures/*
 
 # Generated reports
 reports/dataset_sources.json
+reports/dataset_manual.md
 reports/dataset_profile.md
 reports/metrics_baseline.json
 reports/metrics_transformer.json

@@ -8,6 +8,7 @@ import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import sklearn
 from sklearn.base import clone
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -229,6 +230,10 @@ def train_baseline_models() -> dict[str, dict]:
 
     metadata = {
         "best_model": best_model_name,
+        "trained_with": {
+            "python": ".".join(map(str, __import__("sys").version_info[:3])),
+            "scikit_learn": sklearn.__version__,
+        },
         "label_convention": {
             "0": "reliable/real",
             "1": "unreliable/fake/clickbait",

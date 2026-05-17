@@ -1,5 +1,9 @@
 {
   "best_model": "svm",
+  "trained_with": {
+    "python": "3.11.0",
+    "scikit_learn": "1.8.0"
+  },
   "label_convention": {
     "0": "reliable/real",
     "1": "unreliable/fake/clickbait"

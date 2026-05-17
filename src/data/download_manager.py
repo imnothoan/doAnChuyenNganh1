@@ -78,7 +78,7 @@ def _write_manual_fallback(issues: list[DownloadStatus]) -> None:
             "4. Kiểm tra `reports/dataset_sources.json` để xác nhận trạng thái.",
         ]
     )
-    (CFG.project_root / "docs" / "DATASET_MANUAL.md").write_text("\n".join(lines), encoding="utf-8")
+    (CFG.reports_dir / "dataset_manual.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def _ensure_local_sample_fallback(results: list[DownloadStatus]) -> list[DownloadStatus]:
