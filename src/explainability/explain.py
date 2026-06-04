@@ -107,9 +107,10 @@ def explain_linear_prediction(
         "top_input_tokens": top_input_tokens,
         "suspicious_terms": find_suspicious_terms(clean_text),
         "explanation_summary": (
-            "Với quy ước 1 = tin nghi ngờ, trọng số dương đẩy dự đoán về nhóm unreliable; "
-            "trọng số âm đẩy dự đoán về nhóm reliable. Với mô hình phi tuyến, bảng TF-IDF "
-            "hiển thị các từ nổi bật trong văn bản để hỗ trợ phân tích."
+            "With the project label convention, class 1 means unreliable/fake/clickbait. "
+            "Positive token contributions push the prediction toward unreliable; negative "
+            "contributions push it toward reliable. For non-linear models, the TF-IDF table "
+            "shows prominent input terms as a fallback explanation."
         ),
     }
     return result

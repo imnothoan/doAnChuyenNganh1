@@ -17,13 +17,13 @@ UNRELIABLE_LABEL = 1
 LABEL_DISPLAY = {
     RELIABLE_LABEL: {
         "name": "reliable",
-        "vi": "Đáng tin",
-        "description": "Nội dung có dấu hiệu đáng tin hơn trong phạm vi mô hình đã học.",
+        "vi": "Reliable",
+        "description": "The content is closer to reliable news patterns learned by the model.",
     },
     UNRELIABLE_LABEL: {
         "name": "unreliable",
-        "vi": "Nghi ngờ",
-        "description": "Nội dung có dấu hiệu tin giả, clickbait hoặc thiếu độ tin cậy.",
+        "vi": "Unreliable",
+        "description": "The content contains patterns associated with fake news, clickbait, or low reliability.",
     },
 }
 

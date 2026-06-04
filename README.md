@@ -91,7 +91,7 @@ SUPABASE_KEY=<anon-or-publishable-key>
 Khởi tạo schema:
 
 ```bash
-export SUPABASE_DB_URL="postgresql://..."
+export SUPABASE_DB_URL="<connection-string>"
 python3 scripts/setup_supabase_db.py
 ```
 
@@ -104,6 +104,22 @@ python3 -m pytest -q
 ```
 
 Kết quả hiện tại: `12 passed`.
+
+## Tài Liệu Báo Cáo Và Bảo Vệ
+
+- `docs/CHUAN_BI_BAO_VE_04_06_VI.md`: file duy nhất nên đọc trước buổi bảo vệ, gồm link dataset, kịch bản nói tiếng Việt, thao tác demo, Q&A và checklist.
+- `docs/ON_TAP_BAO_VE_CHI_TIET_VI.md`: tài liệu ôn chi tiết để hiểu dataset, preprocessing, TF-IDF, model, metrics, risk score, explainability và Supabase.
+- `slides/Major_project_1_slide.pptx`: slide PowerPoint em đã chỉnh, dùng trực tiếp khi thuyết trình.
+- `slides/Major_project_1_slide.pdf`: bản PDF của slide thuyết trình.
+- `slides/SLIDE_SPEAKER_NOTES_VI.md`: lời nói tiếng Việt theo đúng 17 slide mới.
+- `docs/REPORT_DRAFT.md`: bản nháp báo cáo đầy đủ theo cấu trúc học thuật gồm mở đầu, cơ sở lý thuyết, phân tích thiết kế, triển khai, kết quả và hướng phát triển.
+- `docs/DEFENSE_GUIDE.md`: kịch bản demo 7-10 phút, câu hỏi vấn đáp thường gặp, checklist trước khi bảo vệ và outline slide.
+- `docs/DEMO_SCRIPT_04_06.md`: kịch bản tay bấm và lời nói chi tiết cho buổi bảo vệ.
+- `docs/DEMO_INPUTS_VI.md`: hai case tiếng Việt để copy/paste khi demo thay vì dùng nút sample dựng sẵn.
+- `docs/RED_TEAM_AUDIT.md`: tự phản biện theo góc nhìn hội đồng khó tính.
+- `docs/PRODUCT_BENCHMARK.md`: so sánh nhanh với các hệ thống fact-checking/news reliability tương tự.
+- `reports/figures/report_*.png`: bộ diagram/UML đơn sắc dùng để chèn vào báo cáo.
+- `scripts/generate_report_assets.py`: script tái sinh các hình báo cáo.
 
 ## Nguồn Dữ Liệu
 

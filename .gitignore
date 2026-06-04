@@ -25,8 +25,8 @@ models/reports/*
 !models/reports/model_metadata.json
 
 reports/figures/*
-!reports/figures/.gitkeep
 !reports/figures/confusion_matrix_*.png
+!reports/figures/report_*.png
 
 # Generated reports
 reports/dataset_sources.json
